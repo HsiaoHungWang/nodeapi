@@ -2,19 +2,13 @@ var express = require('express');
 var router = express.Router();
 const mysql = require('mysql2/promise');
 
-
 //MySQL 連線設定
 const connectionString = {
     host:'localhost',
     user:'root',
     password:'P@ssw0rd',
-    database: 'mydb'
+    database: 'mydb1'
 }
-
-
-router.get('/', function(req, res, next) {
-  res.json({ title: 'RESTful API' });
-});
 
 //http://localhost:3000/api/categories
 router.get('/categories',async(req, res)=>{
@@ -32,7 +26,6 @@ router.get('/categories',async(req, res)=>{
         }
     }
 })
-
 router.get('/categories/:id', async (req, res) => {
     const { id } = req.params;
     let connection;
@@ -53,8 +46,6 @@ router.get('/categories/:id', async (req, res) => {
       }
     }
   });
-
-
 router.post('/categories', async (req, res) => {
     const { CategoryName } = req.body;
     let connection;
@@ -71,7 +62,6 @@ router.post('/categories', async (req, res) => {
       }
     }
   });
-
 router.delete('/categories/:id', async (req, res) => {
     const { id } = req.params;
     let connection;
@@ -92,8 +82,7 @@ router.delete('/categories/:id', async (req, res) => {
       }
     }
   });
-
-  router.put('/categories/:id', async (req, res) => {
+router.put('/categories/:id', async (req, res) => {
     const { id } = req.params;
     const { CategoryName } = req.body;
     let connection;
@@ -115,19 +104,16 @@ router.delete('/categories/:id', async (req, res) => {
     }
   });
 
-
-  router.get('/spots', async (req, res) => {
-    const { keyword, categoryId, sortBy, sortType, page, pageSize } = req.query;
+router.get('/spots', async (req, res) => {
+  const { keyword, categoryId, sortBy, sortType, page, pageSize } = req.query;
   
-     // 建立查詢語句
+  
   let query = 'SELECT * FROM spotimagesspot WHERE 1=1';
   const params = [];
   if (keyword) {
     query += ' AND (SpotTitle LIKE ? OR SpotDescription LIKE ?)';
     params.push(`%${keyword}%`,`%${keyword}%`);
-
-  }
-  
+  }  
   if (categoryId) {
     query += ' AND CategoryId = ?';
     params.push(categoryId);
@@ -143,7 +129,8 @@ router.delete('/categories/:id', async (req, res) => {
   const offset = ((parseInt(page, 10) - 1) * limit).toString(); 
 
   query += ' LIMIT ? OFFSET ?';
-
+  params.push(limit);
+  params.push(offset)
 
 
 let connection;
@@ -156,4 +143,7 @@ let connection;
   }
   });
 
+  router.get('/', function(req, res, next) {
+    res.json({ title: 'RESTful API' });
+  });
 module.exports = router;
