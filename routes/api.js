@@ -7,7 +7,7 @@ const connectionString = {
     host:'localhost',
     user:'root',
     password:'P@ssw0rd',
-    database: 'mydb1'
+    database: 'mydb'
 }
 
 //http://localhost:3000/api/categories
