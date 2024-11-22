@@ -105,27 +105,45 @@ router.put('/categories/:id', async (req, res) => {
   });
 
 router.get('/spots', async (req, res) => {
-  const { keyword, categoryId, sortBy, sortType, page, pageSize } = req.query;
-  
+ 
+  const { categoryid, search, ordering, page, page_size } = req.query;
   
   let query = 'SELECT * FROM spotimagesspot WHERE 1=1';
   const params = [];
-  if (keyword) {
+  if (search) {
     query += ' AND (SpotTitle LIKE ? OR SpotDescription LIKE ?)';
-    params.push(`%${keyword}%`,`%${keyword}%`);
+    params.push(`%${search}%`,`%${search}%`);
   }  
-  if (categoryId) {
+  if (categoryid) {
     query += ' AND CategoryId = ?';
-    params.push(categoryId);
+    params.push(categoryid);
   }
 
   // 排序
-  if (sortBy) {
-    query += ` ORDER BY ${sortBy} ${sortType === 'asc' ? 'ASC' : 'DESC'}`;
+  // if (sortBy) {
+  //   query += ` ORDER BY ${sortBy} ${sortType === 'asc' ? 'ASC' : 'DESC'}`;
+  // }
+
+  let sortBy = 'spotid';
+  let sortType = 'asc';
+  if (ordering) {
+    if (ordering.startsWith('-')) {
+      sortBy = ordering.substring(1);
+      sortType = 'desc';
+    } else {
+      sortBy = ordering;
+      sortType = 'asc';
+    }
   }
 
+  // if (validSortColumns.includes(sortBy) && validSortDirections.includes(sortType)) {
+    query += ` ORDER BY ${sortBy} ${sortType}`;
+  // }
+
+
+
 //   分頁
-  const limit = (parseInt(pageSize, 10) || 10).toString();
+  const limit = (parseInt(page_size, 10) || 10).toString();
   const offset = ((parseInt(page, 10) - 1) * limit).toString(); 
 
   query += ' LIMIT ? OFFSET ?';
