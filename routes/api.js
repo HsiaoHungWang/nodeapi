@@ -9,28 +9,22 @@ const connectionString = {
     password:'P@ssw0rd',
     database: 'mydb'
 }
+// 建立 MySQL 連接
+const connection = mysql.createPool(connectionString);
 
 //http://localhost:3000/api/categories
-router.get('/categories',async(req, res)=>{
-    let connection;
-    try{
-        connection = await mysql.createConnection(connectionString);
+router.get('/categories',async(req, res)=>{   
+    try{       
         const[rows] = await connection.execute('SELECT * FROM categories');
         res.json(rows)
     }catch(error){
         console.log('資料庫連線失敗：', error);
         res.status(500).send('資料庫錯誤...')
-    }finally{
-        if(connection){
-            await connection.end();
-        }
     }
 })
 router.get('/categories/:id', async (req, res) => {
-    const { id } = req.params;
-    let connection;
+    const { id } = req.params;   
     try {
-      connection = await mysql.createConnection(connectionString);
       const [rows] = await connection.execute('SELECT * FROM categories WHERE CategoryId = ?', [id]);
       if (rows.length > 0) {
         res.json(rows[0]);
@@ -40,33 +34,21 @@ router.get('/categories/:id', async (req, res) => {
     } catch (error) {
       console.error('資料庫連線失敗:', error);
       res.status(500).send('資料庫錯誤...');
-    } finally {
-      if (connection) {
-        await connection.end();
-      }
-    }
+    } 
   });
 router.post('/categories', async (req, res) => {
-    const { CategoryName } = req.body;
-    let connection;
-    try {
-      connection = await mysql.createConnection(connectionString);
+    const { CategoryName } = req.body;  
+    try {    
       const [result] = await connection.execute('INSERT INTO categories (CategoryName) VALUES (?)', [CategoryName]);
       res.status(201).json({ id: result.insertId, CategoryName});
     } catch (error) {
       console.error('資料庫連線失敗:', error);
       res.status(500).send('資料庫錯誤...');
-    } finally {
-      if (connection) {
-        await connection.end();
-      }
-    }
+    } 
   });
 router.delete('/categories/:id', async (req, res) => {
-    const { id } = req.params;
-    let connection;
+    const { id } = req.params;  
     try {
-      connection = await mysql.createConnection(connectionString);
       const [result] = await connection.execute('DELETE FROM categories WHERE CategoryId = ?', [id]);
       if(result.affectedRows > 0){
         res.status(204).send()
@@ -76,18 +58,12 @@ router.delete('/categories/:id', async (req, res) => {
     } catch (error) {
       console.error('資料庫連線失敗:', error);
       res.status(500).send('資料庫錯誤...');
-    } finally {
-      if (connection) {
-        await connection.end();
-      }
-    }
+    } 
   });
 router.put('/categories/:id', async (req, res) => {
     const { id } = req.params;
-    const { CategoryName } = req.body;
-    let connection;
+    const { CategoryName } = req.body;   
     try {
-      connection = await mysql.createConnection(connectionString);
       const [result] = await connection.execute('UPDATE categories SET CategoryName = ? WHERE CategoryId = ?', [CategoryName, id]);
       if (result.affectedRows > 0) {
         res.json({ id, CategoryName });
@@ -97,11 +73,7 @@ router.put('/categories/:id', async (req, res) => {
     } catch (error) {
       console.error('資料庫連線失敗:', error);
       res.status(500).send('資料庫錯誤...');
-    } finally {
-      if (connection) {
-        await connection.end();
-      }
-    }
+    } 
   });
 
 router.get('/spots', async (req, res) => {
@@ -119,43 +91,32 @@ router.get('/spots', async (req, res) => {
     params.push(categoryid);
   }
 
+  // 查詢總記錄數
+  const [countResult] = await connection.execute(query, params);
+  const totalPages = Math.ceil(countResult.length / parseInt(page_size, 10) || 10);
+
   // 排序
-  // if (sortBy) {
-  //   query += ` ORDER BY ${sortBy} ${sortType === 'asc' ? 'ASC' : 'DESC'}`;
-  // }
-
-  let sortBy = 'spotid';
-  let sortType = 'asc';
   if (ordering) {
-    if (ordering.startsWith('-')) {
-      sortBy = ordering.substring(1);
-      sortType = 'desc';
-    } else {
-      sortBy = ordering;
-      sortType = 'asc';
-    }
-  }
-
-  // if (validSortColumns.includes(sortBy) && validSortDirections.includes(sortType)) {
+    const sortBy = ordering.startsWith('-') ? ordering.substring(1) : ordering;
+    const sortType = ordering.startsWith('-') ? 'desc' : 'asc';
     query += ` ORDER BY ${sortBy} ${sortType}`;
-  // }
-
-
+  }
 
 //   分頁
   const limit = (parseInt(page_size, 10) || 10).toString();
   const offset = ((parseInt(page, 10) - 1) * limit).toString(); 
-
   query += ' LIMIT ? OFFSET ?';
   params.push(limit);
   params.push(offset)
 
 
-let connection;
-  try {
-    connection = await mysql.createConnection(connectionString);
+
+  try {  
     const [results] = await connection.execute(query, params);
-    res.json(results);
+    res.json({
+      totalPages,
+      datas:results
+    });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
